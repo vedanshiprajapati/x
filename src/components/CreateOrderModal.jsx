@@ -87,12 +87,12 @@ const CreateOrderModal = ({
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose}>
+    <Modal isOpen={isOpen} onClose={onClose} size={"lg"}>
       <ModalOverlay />
       <ModalContent>
         <ModalHeader>{isEdit ? "Edit Order" : "Create Order"}</ModalHeader>
         <ModalCloseButton />
-        <ModalBody>
+        <ModalBody overflowY="auto" maxHeight="calc(100vh - 200px)">
           <form onSubmit={handleSubmit(onSubmit)}>
             <FormControl mb={4} isInvalid={errors.name}>
               <FormLabel>Product Name</FormLabel>
