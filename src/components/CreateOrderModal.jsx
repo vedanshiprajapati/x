@@ -21,7 +21,7 @@ const CreateOrderModal = ({
   isOpen,
   onClose,
   isEdit = false,
-  orderDetails = {},
+  orderDetails,
   handleOrderDetails,
   isCompleted,
 }) => {
@@ -53,6 +53,12 @@ const CreateOrderModal = ({
   useEffect(() => {
     if (isEdit) {
       reset(orderDetails);
+    } else {
+      reset({
+        name: "",
+        characteristics: "",
+        sku: [{ selling_price: "", max_retail_price: "", amount: "" }],
+      });
     }
   }, [isEdit, orderDetails, reset]);
 
