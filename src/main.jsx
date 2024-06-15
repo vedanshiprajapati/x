@@ -1,6 +1,5 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
-import App from "./App.jsx";
 import { ChakraProvider } from "@chakra-ui/react";
 import { Route, BrowserRouter as Router, Routes } from "react-router-dom";
 import Login from "./components/Login.jsx";
@@ -10,6 +9,7 @@ import { AuthProvider } from "./AuthContext.jsx";
 import Layout from "./Layout.jsx";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import { QueryClient, QueryClientProvider } from "react-query";
+import HomePage from "./components/Home.jsx";
 
 const queryClient = new QueryClient();
 
@@ -20,7 +20,7 @@ ReactDOM.createRoot(document.getElementById("root")).render(
         <Router>
           <Routes>
             <Route path="/" element={<Layout />}>
-              <Route path="/" element={<App />} />
+              <Route path="/" element={<HomePage />} />
               <Route
                 path="/dashboard"
                 element={
