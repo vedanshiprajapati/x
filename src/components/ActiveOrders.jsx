@@ -4,19 +4,7 @@ import { fetchProduct } from "../utils/api";
 import { useQuery } from "react-query";
 import Order from "./Order";
 
-const ActiveOrders = ({ onEdit }) => {
-  const [data, setData] = useState(null);
-
-  const {
-    data: productData,
-    error,
-    isLoading,
-  } = useQuery("productData", fetchProduct, {
-    onSuccess: (data) => {
-      setData(data.productData);
-    },
-  });
-
+const ActiveOrders = ({ handleEdit, data = null }) => {
   return (
     <Box>
       <Table variant="simple">
@@ -24,8 +12,8 @@ const ActiveOrders = ({ onEdit }) => {
           <Tr>
             <Th>Id</Th>
             <Th>Product name</Th>
-            <Th>characteristics</Th>
-            <Th>sku</Th>
+            <Th>Characteristics</Th>
+            <Th>SKU</Th>
             <Th>More</Th>
           </Tr>
         </Thead>
@@ -34,9 +22,8 @@ const ActiveOrders = ({ onEdit }) => {
             data?.map((order) => (
               <Order
                 order={order}
-                handleButton={() => onEdit(order)}
+                handleButton={() => handleEdit(order)}
                 key={order?.id}
-                isActive={true}
               />
             ))}
         </Tbody>

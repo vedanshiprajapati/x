@@ -1,7 +1,7 @@
 import { Button, Td, Tr } from "@chakra-ui/react";
 import { useState } from "react";
 import CreateOrderModal from "./CreateOrderModal";
-const Order = ({ order, handleButton, isActive }) => {
+const Order = ({ order, handleButton, isReadOnly }) => {
   return (
     <>
       <Tr>

@@ -15,26 +15,64 @@ import {
 import ActiveOrders from "./ActiveOrders";
 import CompletedOrders from "./CompletedOrders";
 import CreateOrderModal from "./CreateOrderModal";
+import { useQuery } from "react-query";
+import { fetchCompleted, fetchProduct } from "../utils/api";
 
 const Dashboard = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedOrder, setSelectedOrder] = useState(null);
+  const [selectedOrder, setSelectedOrder] = useState({});
   const { colorMode } = useColorMode();
   const bgColor = useColorModeValue("gray.50", "gray.800");
   const headingColor = useColorModeValue("gray.700", "gray.200");
   const [isEdit, setIsEdit] = useState(false);
-
+  const [data, setData] = useState(null);
+  const [completedData, setCompletedData] = useState(null);
+  const [isCompleted, setIsCompleted] = useState(false);
+  const {
+    data: customerData,
+    error: customerError,
+    isLoading: isCustomerLoading,
+  } = useQuery("customerData", fetchProduct, {
+    onSuccess: (data) => {
+      setData(data.productData || []);
+    },
+  });
+  const {
+    data: completeddata,
+    error: completedError,
+    isLoading: isCompletedLoading,
+  } = useQuery("completedData", fetchCompleted, {
+    onSuccess: (data) => {
+      setCompletedData(data.productData2 || []);
+    },
+  });
   const handleOpenModal = () => setIsModalOpen(true);
+
   const handleCloseModal = () => {
     setIsModalOpen(false);
     isEdit && setIsEdit(false);
-    setSelectedOrder(null);
+    setSelectedOrder({});
   };
 
   const handleEdit = (order) => {
     setSelectedOrder(order);
     setIsEdit(true);
     handleOpenModal();
+  };
+
+  const handleUpdateOrder = (updatedOrder, isEdit) => {
+    if (isEdit) {
+      const updatedOrders = data.map((order) =>
+        order.id === updatedOrder.id ? updatedOrder : order
+      );
+      setData(updatedOrders);
+      setIsEdit(false);
+    } else {
+      setData([...data, updatedOrder]);
+    }
+  };
+  const handleTabChange = (index) => {
+    setIsCompleted(index === 1);
   };
 
   return (
@@ -51,21 +89,26 @@ const Dashboard = () => {
           <Heading size="lg" color={headingColor}>
             Sale Orders
           </Heading>
-          <Button onClick={handleOpenModal} colorScheme="blue" size="sm">
+          <Button
+            onClick={handleOpenModal}
+            colorScheme="blue"
+            size="sm"
+            isDisabled={isCompleted}
+          >
             + New Order
           </Button>
         </Flex>
-        <Tabs variant="enclosed" colorScheme="blue">
+        <Tabs variant="enclosed" colorScheme="blue" onChange={handleTabChange}>
           <TabList>
             <Tab>Active Orders</Tab>
             <Tab>Completed Orders</Tab>
           </TabList>
           <TabPanels>
             <TabPanel px={0}>
-              <ActiveOrders onEdit={handleEdit} />
+              <ActiveOrders handleEdit={handleEdit} data={data} />
             </TabPanel>
             <TabPanel px={0}>
-              <CompletedOrders onEdit={handleEdit} />
+              <CompletedOrders onEdit={handleEdit} data={completedData} />
             </TabPanel>
           </TabPanels>
         </Tabs>
@@ -75,6 +118,8 @@ const Dashboard = () => {
         onClose={handleCloseModal}
         isEdit={isEdit}
         orderDetails={selectedOrder}
+        handleOrderDetails={handleUpdateOrder}
+        isCompleted={isCompleted}
       />
     </Box>
   );

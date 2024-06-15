@@ -12,33 +12,35 @@ import {
   InputRightElement,
   Checkbox,
   useColorMode,
-  Alert,
-  AlertIcon,
-  AlertTitle,
-  AlertDescription,
+  Text,
 } from "@chakra-ui/react";
 import { MoonIcon, SunIcon, ViewIcon, ViewOffIcon } from "@chakra-ui/icons";
+import { useForm } from "react-hook-form";
 
 const Login = () => {
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
-  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
   const { login, setIsAuthenticated } = useContext(AuthContext);
   const navigate = useNavigate();
-  const [showPassword, setShowPassword] = useState(false);
   const { colorMode, toggleColorMode } = useColorMode();
+  const [showPassword, setShowPassword] = useState(false);
+  const [alert, setAlert] = useState(false);
+  const [keepLoggedIn, setKeepLoggedIn] = useState(false);
 
   const handleTogglePassword = () => setShowPassword(!showPassword);
-  const [alert, setAlert] = useState(false);
-  const handleLogin = (e) => {
-    e.preventDefault();
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm();
+
+  const handleLogin = (data) => {
+    const { username, password } = data;
     const { success, message } = login(username, password);
     if (success) {
       setIsAuthenticated(true);
       if (keepLoggedIn) {
         localStorage.setItem("isAuthenticated", true);
-      }
-      if (!keepLoggedIn) {
+      } else {
         localStorage.removeItem("isAuthenticated");
       }
       navigate("/dashboard");
@@ -49,21 +51,14 @@ const Login = () => {
 
   return (
     <>
-      {alert && (
-        <Alert status="error" position={"absolute"}>
-          <AlertIcon />
-          <AlertTitle>Incorrect credienticals </AlertTitle>
-          <AlertDescription>
-            Your password or Username is incorrect.
-          </AlertDescription>
-        </Alert>
-      )}
       <Flex height="100vh" alignItems="center" justifyContent="center">
         <Box
           bg={colorMode === "light" ? "gray.100" : "gray.700"}
           p={8}
           borderRadius={8}
           boxShadow="lg"
+          width="100%"
+          maxW="sm"
         >
           <Flex justify="space-between" mb={6}>
             <Heading size="lg">Login</Heading>
@@ -73,43 +68,52 @@ const Login = () => {
               onClick={toggleColorMode}
             />
           </Flex>
-          <Input
-            mb={4}
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-          <InputGroup>
+          <form onSubmit={handleSubmit(handleLogin)}>
             <Input
-              pr="4.5rem"
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Username"
+              {...register("username", { required: "Username is required" })}
             />
-            <InputRightElement>
-              <IconButton
-                h="1.75rem"
-                size="sm"
-                icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
-                aria-label={showPassword ? "Hide password" : "Show password"}
-                onClick={handleTogglePassword}
+            {errors.username && (
+              <Text color="red.500">{errors.username.message}</Text>
+            )}
+            <InputGroup mt={4}>
+              <Input
+                pr="4.5rem"
+                type={showPassword ? "text" : "password"}
+                placeholder="Password"
+                {...register("password", { required: "Password is required" })}
               />
-            </InputRightElement>
-          </InputGroup>
-          <Checkbox
-            mt={4}
-            isChecked={keepLoggedIn}
-            onChange={(e) => {
-              console.log(e.target.checked, "checkmarkx");
-              return setKeepLoggedIn(e.target.checked);
-            }}
-          >
-            Keep me logged in
-          </Checkbox>
-          <Button mt={4} colorScheme="blue" width="100%" onClick={handleLogin}>
-            Login
-          </Button>
+              <InputRightElement>
+                <IconButton
+                  h="1.75rem"
+                  size="sm"
+                  icon={showPassword ? <ViewOffIcon /> : <ViewIcon />}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
+                  onClick={handleTogglePassword}
+                />
+              </InputRightElement>
+            </InputGroup>
+            {errors.password && (
+              <Text color="red.500" mb={2}>
+                {errors.password.message}
+              </Text>
+            )}
+            {alert && (
+              <Text color="red.500" mb={4}>
+                Your username or password is incorrect.
+              </Text>
+            )}
+            <Checkbox
+              mt={4}
+              isChecked={keepLoggedIn}
+              onChange={(e) => setKeepLoggedIn(e.target.checked)}
+            >
+              Keep me logged in
+            </Checkbox>
+            <Button mt={4} colorScheme="blue" width="100%" type="submit">
+              Login
+            </Button>
+          </form>
         </Box>
       </Flex>
     </>

@@ -1,21 +1,8 @@
 import React, { useState } from "react";
 import { Box, Table, Tbody, Tr, Td, Th, Thead } from "@chakra-ui/react";
-import { useQuery } from "react-query";
-import { fetchCompleted } from "../utils/api";
 import Order from "./Order";
 
-const CompletedOrders = ({ onEdit }) => {
-  const [data, setData] = useState(null);
-  const {
-    data: productData,
-    error,
-    isLoading,
-  } = useQuery("productData", fetchCompleted, {
-    onSuccess: (data) => {
-      setData(data.productData);
-    },
-  });
-
+const CompletedOrders = ({ onEdit, data = null }) => {
   return (
     <Box>
       <Table variant="simple">

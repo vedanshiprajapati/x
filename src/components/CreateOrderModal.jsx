@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Modal,
   ModalOverlay,
@@ -13,30 +13,41 @@ import {
   FormLabel,
   Box,
   Text,
+  Flex,
 } from "@chakra-ui/react";
 import { useForm, useFieldArray } from "react-hook-form";
-import { MultiSelect } from "chakra-multiselect";
 
 const CreateOrderModal = ({
   isOpen,
   onClose,
   isEdit = false,
   orderDetails = {},
+  handleOrderDetails,
+  isCompleted,
 }) => {
-  console.log(orderDetails, "order ki detailsss ki ma ki bhencho");
-  const { register, control, handleSubmit, reset } = useForm({
+  const {
+    register,
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm({
     defaultValues: {
-      products: orderDetails.name || [],
-      credits: orderDetails.category || "",
-      skus: orderDetails.sku || [
-        { sellingRate: "", maxRetailPrice: "", amount: "" },
-      ],
+      name: orderDetails?.name || "",
+      characteristics: orderDetails?.characteristics || "",
+      sku: orderDetails?.sku
+        ? orderDetails.sku.map((skuItem) => ({
+            selling_price: skuItem.selling_price,
+            max_retail_price: skuItem.max_retail_price,
+            amount: skuItem.amount,
+          }))
+        : [{ selling_price: "", max_retail_price: "", amount: "" }],
     },
   });
 
   const { fields, append, remove } = useFieldArray({
     control,
-    name: "skus",
+    name: "sku",
   });
 
   useEffect(() => {
@@ -49,16 +60,28 @@ const CreateOrderModal = ({
     const timestamp = new Date().toISOString();
     const orderData = {
       ...data,
+      sku: data.sku.map((skuItem) => ({
+        selling_price: skuItem.selling_price,
+        max_retail_price: skuItem.max_retail_price,
+        amount: skuItem.amount,
+      })),
       addedAt: isEdit ? orderDetails.addedAt : timestamp,
       updatedAt: timestamp,
+      id: Math.floor(Math.random() * 900) + 100,
     };
 
     if (isEdit) {
-      // Add logic to handle edit
-      console.log("Edit Order: ", orderData);
+      const updatedOrderDetails = {
+        ...orderDetails,
+        name: orderData.name,
+        characteristics: orderData.characteristics,
+        sku: orderData.sku,
+        updatedAt: orderData.updatedAt,
+      };
+
+      handleOrderDetails(updatedOrderDetails, isEdit);
     } else {
-      // Add logic to handle create
-      console.log("Create Order: ", orderData);
+      handleOrderDetails(orderData, isEdit);
     }
     onClose();
   };
@@ -71,24 +94,31 @@ const CreateOrderModal = ({
         <ModalCloseButton />
         <ModalBody>
           <form onSubmit={handleSubmit(onSubmit)}>
-            <FormControl mb={4}>
-              <FormLabel>Products</FormLabel>
-              <MultiSelect
-                placeholder="Select products"
-                options={[
-                  { label: "Zeus", value: "zeus" },
-                  { label: "Athena", value: "athena" },
-                  { label: "Hades", value: "hades" },
-                  { label: "Apollo", value: "apollo" },
-                  { label: "Ares", value: "ares" },
-                ]}
-                {...register("products")}
+            <FormControl mb={4} isInvalid={errors.name}>
+              <FormLabel>Product Name</FormLabel>
+              <Input
+                placeholder="Enter product name"
+                {...register("name", { required: "Product name is required" })}
+                readOnly={isCompleted}
               />
+              {errors.name && (
+                <Text color="red.500">{errors.name.message}</Text>
+              )}
             </FormControl>
-            <FormControl mb={4}>
-              <FormLabel>Credits</FormLabel>
-              <Input placeholder="Enter credits" {...register("credits")} />
+            <FormControl mb={4} isInvalid={errors.characteristics}>
+              <FormLabel>Characteristics</FormLabel>
+              <Input
+                placeholder="Enter characteristics"
+                {...register("characteristics", {
+                  required: "Characteristics are required",
+                })}
+                readOnly={isCompleted}
+              />
+              {errors.characteristics && (
+                <Text color="red.500">{errors.characteristics.message}</Text>
+              )}
             </FormControl>
+
             <Box mt={4}>
               {fields.map((item, index) => (
                 <Box
@@ -98,52 +128,102 @@ const CreateOrderModal = ({
                   p={4}
                   mb={4}
                 >
-                  <Text fontWeight="bold">
-                    SKU {index + 1}
+                  <Flex justifyContent={"space-between"}>
+                    <Text fontWeight="bold">SKU {index + 1}</Text>
                     <Button
                       onClick={() => remove(index)}
                       ml={2}
                       size="xs"
                       colorScheme="red"
+                      isDisabled={isCompleted}
                     >
-                      Remove
+                      X
                     </Button>
-                  </Text>
-                  <FormControl mt={2}>
+                  </Flex>
+                  <FormControl
+                    mt={2}
+                    isInvalid={errors?.sku?.[index]?.selling_price}
+                  >
                     <FormLabel>Selling Rate</FormLabel>
                     <Input
                       placeholder="Enter selling rate"
-                      {...register(`skus.${index}.sellingRate`)}
+                      {...register(`sku.${index}.selling_price`, {
+                        required: "Selling rate is required",
+                        valueAsNumber: true,
+                        validate: (value) =>
+                          !isNaN(value) || "Selling rate must be a number",
+                      })}
+                      readOnly={isCompleted}
                     />
+                    {errors?.sku?.[index]?.selling_price && (
+                      <Text color="red.500">
+                        {errors.sku[index].selling_price.message}
+                      </Text>
+                    )}
                   </FormControl>
-                  <FormControl mt={2}>
+                  <FormControl
+                    mt={2}
+                    isInvalid={errors?.sku?.[index]?.max_retail_price}
+                  >
                     <FormLabel>Max Retail Price</FormLabel>
                     <Input
                       placeholder="Enter max retail price"
-                      {...register(`skus.${index}.maxRetailPrice`)}
+                      {...register(`sku.${index}.max_retail_price`, {
+                        required: "Max retail price is required",
+                        valueAsNumber: true,
+                        validate: (value) =>
+                          !isNaN(value) || "Max retail price must be a number",
+                      })}
+                      readOnly={isCompleted}
                     />
+                    {errors?.sku?.[index]?.max_retail_price && (
+                      <Text color="red.500">
+                        {errors.sku[index].max_retail_price.message}
+                      </Text>
+                    )}
                   </FormControl>
-                  <FormControl mt={2}>
+                  <FormControl mt={2} isInvalid={errors?.sku?.[index]?.amount}>
                     <FormLabel>Amount</FormLabel>
                     <Input
                       placeholder="Enter amount"
-                      {...register(`skus.${index}.amount`)}
+                      {...register(`sku.${index}.amount`, {
+                        required: "Amount is required",
+                        valueAsNumber: true,
+                        validate: (value) =>
+                          !isNaN(value) || "Amount must be a number",
+                      })}
+                      readOnly={isCompleted}
                     />
+                    {errors?.sku?.[index]?.amount && (
+                      <Text color="red.500">
+                        {errors.sku[index].amount.message}
+                      </Text>
+                    )}
                   </FormControl>
                 </Box>
               ))}
               <Button
                 onClick={() =>
-                  append({ sellingRate: "", maxRetailPrice: "", amount: "" })
+                  append({
+                    selling_price: "",
+                    max_retail_price: "",
+                    amount: "",
+                  })
                 }
                 colorScheme="blue"
                 mt={4}
+                isDisabled={isCompleted}
               >
                 + Add SKU
               </Button>
             </Box>
             <ModalFooter>
-              <Button colorScheme="blue" mr={3} type="submit">
+              <Button
+                colorScheme="blue"
+                mr={3}
+                type="submit"
+                isDisabled={isCompleted}
+              >
                 {isEdit ? "Save" : "Create"}
               </Button>
               <Button variant="ghost" onClick={onClose}>
